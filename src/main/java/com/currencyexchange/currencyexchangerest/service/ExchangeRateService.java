@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -73,5 +74,13 @@ public class ExchangeRateService {
 
     public LocalDate stringToLocalDate(String date) {
         return LocalDate.parse(date);
+    }
+
+    public ExchangeRateDto deleteExchangeRate(String base, String target, String date) {
+        Optional<ExchangeRateEntity> entity = exchangeRateRepository.findByBaseAndTargetAndDate(base, target, stringToLocalDate(date));
+        entity.ifPresent(exchangeRateRepository::delete);
+        return exchangeRateMapper.entityToDto(entity.orElseThrow(() -> {
+            throw new NoSuchElementException();
+        }));
     }
 }

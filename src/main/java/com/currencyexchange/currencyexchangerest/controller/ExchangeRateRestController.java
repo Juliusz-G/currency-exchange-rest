@@ -47,4 +47,13 @@ public class ExchangeRateRestController {
                 .body(exchangeRateService.getHistoricalIntervalExchangeRates(base, target, from, to));
     }
 
+    @DeleteMapping("/delete/{base}/{target}/{date}")
+    public ResponseEntity<ExchangeRateDto> deleteCurrency(
+            @PathVariable String base,
+            @PathVariable String target,
+            @PathVariable String date) {
+        return ResponseEntity.ok()
+                .body(exchangeRateService.deleteExchangeRate(base, target, date));
+    }
+
 }
