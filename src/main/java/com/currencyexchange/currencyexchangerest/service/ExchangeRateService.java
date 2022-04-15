@@ -1,5 +1,7 @@
 package com.currencyexchange.currencyexchangerest.service;
 
+import com.currencyexchange.currencyexchangerest.exception.NoExchangeRateFoundInApiException;
+import com.currencyexchange.currencyexchangerest.exception.NoExchangeRateFoundInDatabaseException;
 import com.currencyexchange.currencyexchangerest.model.ExchangeRateDto;
 import com.currencyexchange.currencyexchangerest.model.ExchangeRateEntity;
 import com.currencyexchange.currencyexchangerest.repository.ExchangeRateRepository;
@@ -10,7 +12,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -49,12 +50,13 @@ public class ExchangeRateService {
         if (entity.isPresent()) {
             return mapper.entityToDto(entity.get());
         }
-        create(base, target, date);
 
-        return mapper.apiToDto(
-                integrationService.getExchangeRate
-                        (base, target, date)
-        );
+        try {
+            create(base, target, date);
+            return mapper.apiToDto(integrationService.getExchangeRate(base, target, date));
+        } catch (RuntimeException e) {
+            throw new NoExchangeRateFoundInApiException();
+        }
     }
 
     //Historical interval Data
@@ -83,7 +85,7 @@ public class ExchangeRateService {
         Optional<ExchangeRateEntity> entity = repository.findByBaseAndTargetAndDate(base, target, stringToLocalDate(date));
         entity.ifPresent(repository::delete);
         return mapper.entityToDto(entity.orElseThrow(() -> {
-            throw new NoSuchElementException();
+            throw new NoExchangeRateFoundInDatabaseException();
         }));
     }
 }
