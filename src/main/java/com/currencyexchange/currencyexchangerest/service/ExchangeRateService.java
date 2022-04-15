@@ -17,54 +17,57 @@ import java.util.stream.Collectors;
 @Service
 public class ExchangeRateService {
 
-    private final ExchangeRateRepository exchangeRateRepository;
-    private final ExchangeRateApiIntegrationService exchangeRateApiIntegrationService;
-    private final ExchangeRateMapper exchangeRateMapper;
+    private final ExchangeRateRepository repository;
+    private final ExchangeRateApiIntegrationService integrationService;
+    private final ExchangeRateMapper mapper;
 
     @Autowired
-    public ExchangeRateService(ExchangeRateRepository exchangeRateRepository,
-                               ExchangeRateApiIntegrationService exchangeRateApiIntegrationService,
-                               ExchangeRateMapper exchangeRateMapper) {
-        this.exchangeRateRepository = exchangeRateRepository;
-        this.exchangeRateApiIntegrationService = exchangeRateApiIntegrationService;
-        this.exchangeRateMapper = exchangeRateMapper;
+    public ExchangeRateService(ExchangeRateRepository repository,
+                               ExchangeRateApiIntegrationService integrationService,
+                               ExchangeRateMapper mapper) {
+        this.repository = repository;
+        this.integrationService = integrationService;
+        this.mapper = mapper;
     }
 
     public void create(String base, String target, String date) {
-        exchangeRateRepository.save(
-                exchangeRateMapper.toEntity(
-                        exchangeRateApiIntegrationService.getExchangeRate(base, target, date)
+        repository.save(
+                mapper.toEntity(
+                        integrationService.getExchangeRate(
+                                base,
+                                target,
+                                date
+                        )
                 )
         );
     }
 
     //Current Data or Historical Data
     public ExchangeRateDto getExchangeRate(String base, String target, String date) {
-        Optional<ExchangeRateEntity> entity = exchangeRateRepository.findByBaseAndTargetAndDate(base, target,
-                stringToLocalDate(date));
+        Optional<ExchangeRateEntity> entity = repository.findByBaseAndTargetAndDate(base, target, stringToLocalDate(date));
 
         if (entity.isPresent()) {
-            return exchangeRateMapper.entityToDto(entity.get());
+            return mapper.entityToDto(entity.get());
         }
         create(base, target, date);
 
-        return exchangeRateMapper.apiToDto(
-                exchangeRateApiIntegrationService.getExchangeRate
+        return mapper.apiToDto(
+                integrationService.getExchangeRate
                         (base, target, date)
         );
     }
 
     //Historical interval Data
     public List<ExchangeRateDto> getHistoricalIntervalExchangeRates(String base, String target, String from, String to) {
-        List<LocalDate> localDateList = getDatesInterval(LocalDate.parse(from), LocalDate.parse(to));
-        List<ExchangeRateDto> exchangeRateDtoList = new ArrayList<>();
+        List<LocalDate> dates = getDatesInterval(LocalDate.parse(from), LocalDate.parse(to));
+        List<ExchangeRateDto> dtoList = new ArrayList<>();
 
-        for (int i = 0; i < localDateList.size() - 1; i++) {
-            ExchangeRateDto exchangeRateDto = getExchangeRate(base, target, localDateList.get(i).toString());
-            exchangeRateDtoList.add(exchangeRateDto);
+        for (int i = 0; i < dates.size() - 1; i++) {
+            ExchangeRateDto dto = getExchangeRate(base, target, dates.get(i).toString());
+            dtoList.add(dto);
         }
 
-        return exchangeRateDtoList;
+        return dtoList;
     }
 
     public List<LocalDate> getDatesInterval(LocalDate startDate, LocalDate endDate) {
@@ -77,9 +80,9 @@ public class ExchangeRateService {
     }
 
     public ExchangeRateDto deleteExchangeRate(String base, String target, String date) {
-        Optional<ExchangeRateEntity> entity = exchangeRateRepository.findByBaseAndTargetAndDate(base, target, stringToLocalDate(date));
-        entity.ifPresent(exchangeRateRepository::delete);
-        return exchangeRateMapper.entityToDto(entity.orElseThrow(() -> {
+        Optional<ExchangeRateEntity> entity = repository.findByBaseAndTargetAndDate(base, target, stringToLocalDate(date));
+        entity.ifPresent(repository::delete);
+        return mapper.entityToDto(entity.orElseThrow(() -> {
             throw new NoSuchElementException();
         }));
     }
