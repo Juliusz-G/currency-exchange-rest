@@ -37,7 +37,7 @@ public class ExchangeRateRestController {
                 .body(exchangeRateService.getExchangeRate(base, target, date));
     }
 
-    @GetMapping("/statistical/{base}/{target}/{from}/{to}")
+    @GetMapping("/historical-interval/{base}/{target}/{from}/{to}")
     public ResponseEntity<List<ExchangeRateDto>> getStatisticalExchangeRate(
             @PathVariable String base,
             @PathVariable String target,
