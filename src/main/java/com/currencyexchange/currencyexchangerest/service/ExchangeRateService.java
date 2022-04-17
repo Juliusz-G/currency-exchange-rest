@@ -32,15 +32,7 @@ public class ExchangeRateService {
     }
 
     public void create(String base, String target, String date) {
-        repository.save(
-                mapper.toEntity(
-                        integrationService.getExchangeRate(
-                                base,
-                                target,
-                                date
-                        )
-                )
-        );
+        repository.save(mapper.toEntity(integrationService.getExchangeRate(base, target, date)));
     }
 
     //Current Data or Historical Data
@@ -91,5 +83,12 @@ public class ExchangeRateService {
 
     public long getAmountOfRecords() {
         return repository.count();
+    }
+
+    public List<ExchangeRateDto> getAllRecords() {
+        return repository.findAll()
+                .stream()
+                .map(mapper::entityToDto)
+                .collect(Collectors.toList());
     }
 }

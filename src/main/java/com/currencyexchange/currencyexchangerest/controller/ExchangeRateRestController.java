@@ -68,4 +68,10 @@ public class ExchangeRateRestController {
                 .body(service.getAmountOfRecords());
     }
 
+    @GetMapping("/all")
+    public ResponseEntity<List<ExchangeRateDto>> getAllRecords() {
+        return ResponseEntity.ok()
+                .body(service.getAllRecords());
+    }
+
 }
