@@ -88,4 +88,8 @@ public class ExchangeRateService {
             throw new NoExchangeRateFoundInDatabaseException();
         }));
     }
+
+    public long getAmountOfRecords() {
+        return repository.count();
+    }
 }

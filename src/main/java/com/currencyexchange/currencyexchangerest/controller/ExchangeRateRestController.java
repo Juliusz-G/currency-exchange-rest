@@ -62,4 +62,10 @@ public class ExchangeRateRestController {
                 .body(service.deleteExchangeRate(base, target, date));
     }
 
+    @GetMapping("/count")
+    public ResponseEntity<Long> getAmountOfRecords() {
+        return ResponseEntity.ok()
+                .body(service.getAmountOfRecords());
+    }
+
 }
