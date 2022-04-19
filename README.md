@@ -110,6 +110,5 @@ Spring Boot, H2, Swagger
 
 ## Authors
 ***
-- [@pawelbarwinski](https://github.com/PawelB-93)
 - [@juliuszgorzen](https://github.com/Juliusz-G)
 
