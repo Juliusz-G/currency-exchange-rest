@@ -13,4 +13,5 @@ public class ExchangeRateDto {
     private String target;
     private LocalDate date;
     private double result;
+    private int views;
 }

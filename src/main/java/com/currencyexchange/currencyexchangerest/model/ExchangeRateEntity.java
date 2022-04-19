@@ -21,4 +21,5 @@ public class ExchangeRateEntity {
     private String target;
     private LocalDate date;
     private double result;
+    private int views;
 }

@@ -1,16 +1,19 @@
 package com.currencyexchange.currencyexchangerest.service;
 
+import com.currencyexchange.currencyexchangerest.exception.IncorrectDateFormatException;
 import com.currencyexchange.currencyexchangerest.exception.NoExchangeRateFoundInApiException;
 import com.currencyexchange.currencyexchangerest.exception.NoExchangeRateFoundInDatabaseException;
 import com.currencyexchange.currencyexchangerest.model.ExchangeRateDto;
 import com.currencyexchange.currencyexchangerest.model.ExchangeRateEntity;
+import com.currencyexchange.currencyexchangerest.model.api.ExchangeRateApi;
 import com.currencyexchange.currencyexchangerest.repository.ExchangeRateRepository;
 import com.currencyexchange.currencyexchangerest.service.mapper.ExchangeRateMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
 
+import java.time.DateTimeException;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -31,22 +34,21 @@ public class ExchangeRateService {
         this.mapper = mapper;
     }
 
-    public void create(String base, String target, String date) {
-        repository.save(mapper.toEntity(integrationService.getExchangeRate(base, target, date)));
-    }
-
     //Current Data or Historical Data
     public ExchangeRateDto getExchangeRate(String base, String target, String date) {
         Optional<ExchangeRateEntity> entity = repository.findByBaseAndTargetAndDate(base, target, stringToLocalDate(date));
 
         if (entity.isPresent()) {
-            return mapper.entityToDto(entity.get());
+            return mapper.entityToDto(saveAndUpdateViews(entity.get()));
         }
 
         try {
-            create(base, target, date);
-            return mapper.apiToDto(integrationService.getExchangeRate(base, target, date));
-        } catch (RuntimeException e) {
+            ExchangeRateApi exchangeRateApi = integrationService.getExchangeRate(base, target, date);
+            if (exchangeRateApi.getResult() == 0) {
+                throw new NoExchangeRateFoundInApiException();
+            }
+            return mapper.entityToDto(saveAndUpdateViews(mapper.apiToEntity(exchangeRateApi)));
+        } catch (RestClientException e) {
             throw new NoExchangeRateFoundInApiException();
         }
     }
@@ -54,23 +56,22 @@ public class ExchangeRateService {
     //Historical interval Data
     public List<ExchangeRateDto> getHistoricalIntervalExchangeRates(String base, String target, String from, String to) {
         List<LocalDate> dates = getDatesInterval(LocalDate.parse(from), LocalDate.parse(to));
-        List<ExchangeRateDto> dtoList = new ArrayList<>();
-
-        for (int i = 0; i < dates.size() - 1; i++) {
-            ExchangeRateDto dto = getExchangeRate(base, target, dates.get(i).toString());
-            dtoList.add(dto);
-        }
-
-        return dtoList;
+        return dates.stream()
+                .map(localDate -> getExchangeRate(base, target, localDate.toString()))
+                .collect(Collectors.toList());
     }
 
     public List<LocalDate> getDatesInterval(LocalDate startDate, LocalDate endDate) {
-        return startDate.datesUntil(endDate)
+        return startDate.datesUntil(endDate.plusDays(1))
                 .collect(Collectors.toList());
     }
 
     public LocalDate stringToLocalDate(String date) {
-        return LocalDate.parse(date);
+        try {
+            return LocalDate.parse(date);
+        } catch (DateTimeException e) {
+            throw new IncorrectDateFormatException();
+        }
     }
 
     public ExchangeRateDto deleteExchangeRate(String base, String target, String date) {
@@ -88,7 +89,13 @@ public class ExchangeRateService {
     public List<ExchangeRateDto> getAllRecords() {
         return repository.findAll()
                 .stream()
-                .map(mapper::entityToDto)
+                .map(entity -> mapper.entityToDto(saveAndUpdateViews(entity)))
                 .collect(Collectors.toList());
+    }
+
+    public ExchangeRateEntity saveAndUpdateViews(ExchangeRateEntity entity) {
+        entity.setViews(entity.getViews() + 1);
+        repository.save(entity);
+        return entity;
     }
 }

@@ -1,6 +1,8 @@
 package com.currencyexchange.currencyexchangerest.exception;
 
-public class NoExchangeRateFoundInApiException extends RuntimeException {
+import org.springframework.web.client.RestClientException;
+
+public class NoExchangeRateFoundInApiException extends RestClientException {
     public NoExchangeRateFoundInApiException() {
         super("Exchange rate not found!");
     }

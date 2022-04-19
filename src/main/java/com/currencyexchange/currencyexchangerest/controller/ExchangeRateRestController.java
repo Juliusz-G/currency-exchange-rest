@@ -7,7 +7,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.constraints.Pattern;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -16,7 +15,6 @@ import java.util.List;
 @RequestMapping("/api")
 public class ExchangeRateRestController {
 
-    public static final String DATE_FORMAT = "[0-9]{4}-[0-9]{2}-[0-9]{2}";
     private final ExchangeRateService service;
 
     @Autowired
@@ -37,7 +35,7 @@ public class ExchangeRateRestController {
     public ResponseEntity<ExchangeRateDto> getHistoricalExchangeRate(
             @PathVariable String base,
             @PathVariable String target,
-            @PathVariable @Pattern(regexp = DATE_FORMAT) String date) {
+            @PathVariable String date) {
         return ResponseEntity.ok()
                 .body(service.getExchangeRate(base, target, date));
 
@@ -47,8 +45,8 @@ public class ExchangeRateRestController {
     public ResponseEntity<List<ExchangeRateDto>> getHistoricalIntervalExchangeRate(
             @PathVariable String base,
             @PathVariable String target,
-            @PathVariable @Pattern(regexp = DATE_FORMAT) String from,
-            @PathVariable @Pattern(regexp = DATE_FORMAT) String to) {
+            @PathVariable String from,
+            @PathVariable String to) {
         return ResponseEntity.ok()
                 .body(service.getHistoricalIntervalExchangeRates(base, target, from, to));
     }
@@ -57,7 +55,7 @@ public class ExchangeRateRestController {
     public ResponseEntity<ExchangeRateDto> deleteExchangeRate(
             @PathVariable String base,
             @PathVariable String target,
-            @PathVariable @Pattern(regexp = DATE_FORMAT) String date) {
+            @PathVariable String date) {
         return ResponseEntity.ok()
                 .body(service.deleteExchangeRate(base, target, date));
     }
